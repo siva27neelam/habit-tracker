@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>My Daily Checklist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+          --bg: #f5f5fb;
+          --card-bg: #ffffff;
+          --accent: #4f46e5;
+          --accent-soft: #e0e7ff;
+          --text-main: #111827;
+          --text-muted: #6b7280;
+          --border: #e5e7eb;
+          --radius-lg: 16px;
+          --radius-md: 10px;
+        }
+
+        * {
+          box-sizing: border-box;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+            sans-serif;
+        }
+
+        body {
+          margin: 0;
+          padding: 16px;
+          background: var(--bg);
+          color: var(--text-main);
+          display: flex;
+          justify-content: center;
+        }
+
+        .page {
+          width: 100%;
+          max-width: 960px;
+        }
+
+        header {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+
+        @media (min-width: 700px) {
+          header {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+        }
+
+        header h1 {
+          margin: 0;
+          font-size: 1.6rem;
+        }
+
+        .user-area {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          align-items: flex-start;
+        }
+
+        @media (min-width: 700px) {
+          .user-area {
+            align-items: flex-end;
+          }
+        }
+
+        .user-label {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--text-muted);
+        }
+
+        .user-chips {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .chip {
+          border-radius: 999px;
+          padding: 4px 10px;
+          font-size: 0.85rem;
+          border: 1px solid var(--border);
+          background: var(--card-bg);
+          cursor: pointer;
+        }
+
+        .chip.active {
+          background: var(--accent);
+          color: #f9fafb;
+          border-color: var(--accent);
+        }
+
+        .date-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 8px;
+        }
+
+        .date-pill {
+          background: var(--card-bg);
+          border-radius: 999px;
+          padding: 6px 14px;
+          border: 1px solid var(--border);
+          font-size: 0.9rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .date-pill input[type="date"] {
+          border: none;
+          background: transparent;
+          font-size: 0.9rem;
+          padding: 0;
+          margin: 0;
+          color: var(--text-main);
+          outline: none;
+        }
+
+        .date-nav-btn {
+          border: none;
+          background: var(--accent-soft);
+          color: var(--accent);
+          padding: 4px 10px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 0.8rem;
+        }
+
+        .date-nav-btn:hover {
+          filter: brightness(0.97);
+        }
+
+        .pill-label {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+        }
+
+        .today-overview {
+          background: linear-gradient(135deg, #4f46e5, #6366f1);
+          color: #f9fafb;
+          padding: 16px 18px;
+          border-radius: var(--radius-lg);
+          margin-bottom: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .today-overview-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .today-overview h2 {
+          margin: 0;
+          font-size: 1rem;
+        }
+
+        .today-stats {
+          font-size: 0.9rem;
+          opacity: 0.9;
+        }
+
+        .progress-bar {
+          width: 100%;
+          height: 8px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.25);
+          overflow: hidden;
+        }
+
+        .progress-fill {
+          width: 0%;
+          height: 100%;
+          background: #a5b4fc;
+          transition: width 0.25s ease-out;
+        }
+
+        .section-title {
+          margin: 0 0 6px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .habit-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+          margin-bottom: 18px;
+        }
+
+        @media (min-width: 780px) {
+          .habit-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        .habit-card {
+          background: var(--card-bg);
+          border-radius: var(--radius-lg);
+          padding: 14px 14px 12px;
+          border: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          opacity: 1;
+        }
+
+        .habit-card.readonly {
+          opacity: 0.7;
+        }
+
+        .habit-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .habit-title {
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .habit-tag {
+          font-size: 0.7rem;
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: var(--accent-soft);
+          color: var(--accent);
+          white-space: nowrap;
+        }
+
+        .habit-main-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 10px;
+          font-size: 0.9rem;
+        }
+
+        .habit-main-row label {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.9rem;
+        }
+
+        .habit-main-row input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+        }
+
+        .time-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+        }
+
+        .time-field {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .time-field input[type="time"] {
+          padding: 3px 6px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border);
+          font-size: 0.85rem;
+        }
+
+        .notes-label {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+
+        .notes-input {
+          width: 100%;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border);
+          padding: 6px 8px;
+          font-size: 0.85rem;
+          resize: vertical;
+          min-height: 40px;
+        }
+
+        .add-task-card {
+          margin-top: 6px;
+          background: var(--card-bg);
+          border-radius: var(--radius-lg);
+          padding: 12px 14px;
+          border: 1px dashed var(--border);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .add-task-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .add-task-row input[type="text"],
+        .add-task-row select {
+          padding: 6px 8px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border);
+          font-size: 0.85rem;
+        }
+
+        .add-task-row input[type="text"] {
+          min-width: 180px;
+          flex: 1;
+        }
+
+        .add-task-row select {
+          min-width: 130px;
+        }
+
+        .actions-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          justify-content: flex-end;
+          margin-top: 10px;
+        }
+
+        .btn {
+          border-radius: 999px;
+          padding: 8px 16px;
+          font-size: 0.9rem;
+          border: none;
+          cursor: pointer;
+        }
+
+        .btn-primary {
+          background: var(--accent);
+          color: #f9fafb;
+        }
+
+        .btn-primary:disabled,
+        .btn-secondary:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .btn-secondary {
+          background: var(--card-bg);
+          color: var(--text-main);
+          border: 1px solid var(--border);
+        }
+
+        .btn-ghost {
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          text-decoration: underline;
+          padding: 6px 4px;
+          font-size: 0.85rem;
+        }
+
+        footer {
+          margin-top: 12px;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          text-align: center;
+        }
+
+        .toast {
+          position: fixed;
+          bottom: 16px;
+          right: 16px;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: #10b981;
+          color: #ecfdf5;
+          font-size: 0.85rem;
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+          opacity: 0;
+          transform: translateY(10px);
+          pointer-events: none;
+          transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        }
+
+        .toast.show {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .error-text {
+          color: #b91c1c;
+          font-size: 0.8rem;
+          margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header>
+        <div>
+            <h1>My Daily Checklist</h1>
+            <div class="date-row">
+                <div class="date-pill">
+                    <span class="pill-label">Date</span>
+                    <input type="date" id="date-input" />
+                </div>
+                <button class="date-nav-btn" id="prev-day-btn">&lt; Prev</button>
+                <button class="date-nav-btn" id="today-btn">Today</button>
+                <button class="date-nav-btn" id="next-day-btn">Next &gt;</button>
+            </div>
+        </div>
+
+        <div class="user-area">
+            <div class="user-label">Active User</div>
+            <div class="user-chips">
+                <button class="chip active" data-username="siva">Siva</button>
+                <button class="chip" data-username="kalpana">Kalpana</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="today-overview">
+        <div class="today-overview-top">
+            <div>
+                <h2 id="overview-title">Today’s Progress</h2>
+                <div class="today-stats" id="progress-text">0 / 0 tasks completed</div>
+            </div>
+            <div class="today-stats" id="extra-stats">Editable</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </section>
+
+    <h3 class="section-title">Daily Tasks</h3>
+
+    <section class="habit-grid" id="habit-grid"></section>
+
+    <div class="add-task-card">
+        <div class="section-title">Add New Task</div>
+        <div class="add-task-row">
+            <input
+                    type="text"
+                    id="new-task-name"
+                    placeholder="Task name (e.g., Journaling)"
+                    aria-label="New task name"
+            />
+            <select id="new-task-category" aria-label="Task category">
+                <option value="">Category</option>
+                <option>Mind</option>
+                <option>Body</option>
+                <option>Self-care</option>
+                <option>Home</option>
+                <option>Health</option>
+                <option>Work</option>
+                <option>Other</option>
+            </select>
+            <button class="btn btn-secondary" id="add-task-btn">Add Task</button>
+        </div>
+        <div class="error-text" id="add-task-error"></div>
+    </div>
+
+    <div class="actions-row">
+        <button class="btn btn-secondary" id="clear-today-btn">Clear Today</button>
+        <button class="btn btn-primary" id="save-day-btn">Save Today’s Check-in</button>
+        <button class="btn-ghost" disabled>View past days (coming soon)</button>
+    </div>
+
+    <footer>
+        Local web UI · Backed by Spring Boot + MySQL · Days lock after submission.
+    </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const habitGrid = document.getElementById('habit-grid');
+    const dateInput = document.getElementById('date-input');
+    const progressText = document.getElementById('progress-text');
+    const progressFill = document.getElementById('progress-fill');
+    const overviewTitle = document.getElementById('overview-title');
+    const extraStats = document.getElementById('extra-stats');
+    const addTaskError = document.getElementById('add-task-error');
+    const toast = document.getElementById('toast');
+
+    const today = new Date().toISOString().slice(0, 10);
+    dateInput.value = today;
+
+    let activeUsername = 'siva';
+    let currentDayData = { date: today, tasks: [], submitted: false };
+
+    function showToast(message, ok = true) {
+      toast.textContent = message;
+      toast.style.background = ok ? '#10b981' : '#b91c1c';
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function toDate(dateStr) {
+      // treat as local date (ignoring time zone offsets)
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getDateState(dateStr, submitted) {
+      const d = toDate(dateStr);
+      const t = toDate(today);
+      if (d > t) return 'future';
+      if (d < t) return 'past';
+      if (submitted) return 'locked'; // today but already submitted
+      return 'editable'; // today, first time
+    }
+
+    function isReadOnly(dateStr, submitted) {
+      return getDateState(dateStr, submitted) !== 'editable';
+    }
+
+    function adjustDate(days) {
+      const d = toDate(dateInput.value || today);
+      d.setDate(d.getDate() + days);
+      dateInput.value = d.toISOString().slice(0, 10);
+      loadDay().catch(console.error);
+    }
+
+    async function fetchJson(url, options) {
+      const resp = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error('Error ' + resp.status + ': ' + txt);
+      }
+      if (resp.status === 204) return null;
+      return resp.json();
+    }
+
+    function computeProgress(tasks) {
+      if (!tasks || tasks.length === 0) {
+        progressText.textContent = 'No tasks yet';
+        progressFill.style.width = '0%';
+        return;
+      }
+      const total = tasks.length;
+      const done = tasks.filter(t => t.done).length;
+      const percent = Math.round((done / total) * 100);
+      progressText.textContent = `${done} / ${total} tasks completed`;
+      progressFill.style.width = `${percent}%`;
+    }
+
+    function createTaskCard(task, readOnly) {
+      const article = document.createElement('article');
+      article.className = 'habit-card';
+      if (readOnly) {
+        article.classList.add('readonly');
+      }
+      article.dataset.taskId = task.taskId;
+
+      const categoryLabel = task.category || 'General';
+      let emoji = '';
+      const n = (task.name || '').toLowerCase();
+      if (n.includes('read')) emoji = '📖';
+      else if (n.includes('exercise') || n.includes('workout')) emoji = '💪';
+      else if (n.includes('skin')) emoji = '🧴';
+      else if (n.includes('cook')) emoji = '🍳';
+      else if (n.includes('diet') || n.includes('food') || n.includes('eat')) emoji = '🥗';
+      else if (n.includes('meditat')) emoji = '🧘';
+      else emoji = '✅';
+
+      article.innerHTML = `
+        <div class="habit-header">
+          <div class="habit-title">${emoji} ${task.name || 'Untitled task'}</div>
+          <span class="habit-tag">${categoryLabel}</span>
+        </div>
+        <div class="habit-main-row">
+          <label>
+            <input type="checkbox" class="done-checkbox" ${task.done ? 'checked' : ''} ${readOnly ? 'disabled' : ''}/> Done
+          </label>
+          <div class="time-group">
+            <div class="time-field">
+              Start:
+              <input type="time" class="start-time" value="${task.startTime || ''}" ${readOnly ? 'disabled' : ''} />
+            </div>
+            <div class="time-field">
+              End:
+              <input type="time" class="end-time" value="${task.endTime || ''}" ${readOnly ? 'disabled' : ''} />
+            </div>
+          </div>
+        </div>
+        <div class="notes-label">Notes</div>
+        <textarea class="notes-input" placeholder="Notes for this task..." ${readOnly ? 'disabled' : ''}>${task.notes || ''}</textarea>
+      `;
+
+      return article;
+    }
+
+    function updateOverviewState(dateStr, submitted, tasks) {
+      const state = getDateState(dateStr, submitted);
+      let msg = '';
+      if (state === 'future') msg = 'Future date · read-only';
+      else if (state === 'past') msg = 'Past date · read-only';
+      else if (state === 'locked') msg = 'Submitted · read-only';
+      else msg = 'Today · editable until first submit';
+
+      extraStats.textContent = msg;
+
+      computeProgress(tasks || []);
+
+      // buttons
+      const saveBtn = document.getElementById('save-day-btn');
+      const clearBtn = document.getElementById('clear-today-btn');
+      const readOnly = isReadOnly(dateStr, submitted);
+      saveBtn.disabled = readOnly;
+      clearBtn.disabled = readOnly;
+    }
+
+    function renderTasks(daySummary) {
+      habitGrid.innerHTML = '';
+      const readOnly = isReadOnly(daySummary.date, daySummary.submitted);
+      (daySummary.tasks || []).forEach(task => {
+        const card = createTaskCard(task, readOnly);
+        habitGrid.appendChild(card);
+      });
+
+      updateOverviewState(daySummary.date, daySummary.submitted, daySummary.tasks);
+    }
+
+    async function loadDay() {
+      const date = dateInput.value;
+      const data = await fetchJson(`/api/users/${activeUsername}/day/${date}`);
+      currentDayData = data || { date, tasks: [], submitted: false };
+      overviewTitle.textContent = `Progress for ${activeUsername} (${date})`;
+      renderTasks(currentDayData);
+    }
+
+    async function saveDay() {
+      const date = dateInput.value;
+      if (isReadOnly(date, currentDayData.submitted)) {
+        showToast('This day is read-only', false);
+        return;
+      }
+
+      const cards = Array.from(document.querySelectorAll('.habit-card'));
+      const tasks = cards.map(card => ({
+        taskId: Number(card.dataset.taskId),
+        done: card.querySelector('.done-checkbox').checked,
+        startTime: card.querySelector('.start-time').value || null,
+        endTime: card.querySelector('.end-time').value || null,
+        notes: card.querySelector('.notes-input').value || null
+      }));
+
+      try {
+        await fetchJson(`/api/users/${activeUsername}/day/${date}`, {
+          method: 'PUT',
+          body: JSON.stringify({ date, tasks })
+        });
+        showToast('Saved & locked for today');
+        // reload so that submitted=true comes from backend
+        await loadDay();
+      } catch (e) {
+        console.error(e);
+        showToast('Failed to save: ' + e.message, false);
+      }
+    }
+
+    async function clearToday() {
+      const date = dateInput.value;
+      if (isReadOnly(date, currentDayData.submitted)) {
+        showToast('This day is read-only', false);
+        return;
+      }
+
+      document.querySelectorAll('.habit-card').forEach(card => {
+        card.querySelector('.done-checkbox').checked = false;
+        card.querySelector('.start-time').value = '';
+        card.querySelector('.end-time').value = '';
+        card.querySelector('.notes-input').value = '';
+      });
+
+      computeProgress([]);
+    }
+
+    async function addTask() {
+      addTaskError.textContent = '';
+      const name = document.getElementById('new-task-name').value.trim();
+      const category = document.getElementById('new-task-category').value.trim();
+      if (!name) {
+        addTaskError.textContent = 'Task name is required.';
+        return;
+      }
+
+      try {
+        await fetchJson(`/api/users/${activeUsername}/tasks`, {
+          method: 'POST',
+          body: JSON.stringify({ name, category })
+        });
+        document.getElementById('new-task-name').value = '';
+        document.getElementById('new-task-category').value = '';
+        showToast('Task added');
+        await loadDay();
+      } catch (e) {
+        console.error(e);
+        addTaskError.textContent = 'Failed to add task.';
+        showToast('Failed to add task', false);
+      }
+    }
+
+    // Event handlers
+    document.getElementById('prev-day-btn').addEventListener('click', () => adjustDate(-1));
+    document.getElementById('next-day-btn').addEventListener('click', () => adjustDate(1));
+    document.getElementById('today-btn').addEventListener('click', () => {
+      dateInput.value = today;
+      loadDay().catch(console.error);
+    });
+    dateInput.addEventListener('change', () => {
+      loadDay().catch(console.error);
+    });
+
+    document.getElementById('save-day-btn').addEventListener('click', () => {
+      saveDay().catch(console.error);
+    });
+
+    document.getElementById('clear-today-btn').addEventListener('click', () => {
+      clearToday().catch(console.error);
+    });
+
+    document.getElementById('add-task-btn').addEventListener('click', () => {
+      addTask().catch(console.error);
+    });
+
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeUsername = chip.dataset.username;
+        loadDay().catch(console.error);
+      });
+    });
+
+    // Initial load
+    loadDay().catch(err => {
+      console.error(err);
+      showToast('Failed to load data', false);
+    });
+</script>
+</body>
+</html>
