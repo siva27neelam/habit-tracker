@@ -41,5 +41,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/my-spring-app:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/my-spring-app:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/habit-tracker:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/habit-tracker:${{ github.sha }}
