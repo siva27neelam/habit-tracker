@@ -51,35 +51,41 @@ public class DaySummaryService {
                 })
                 .toList();
 
-        boolean submitted = !logs.isEmpty(); // == “this day has been saved at least once”
+        boolean submitted = !logs.isEmpty();
+
+        LocalDate firstDate = taskLogRepository.findMinLogDateByUserId(user.getId());
+        if (firstDate == null) {
+            // no data yet: starting point is "today"
+            firstDate = LocalDate.now();
+        }
 
         return DaySummaryDto.builder()
                 .date(date)
                 .tasks(taskDtos)
                 .submitted(submitted)
+                .firstDate(firstDate)
                 .build();
     }
+
 
 
     @Transactional
     public void saveDaySummary(User user, LocalDate date, List<TaskLogDto> taskDtos) {
         LocalDate today = LocalDate.now();
 
+        // 1) Block future dates completely
         if (date.isAfter(today)) {
             throw new IllegalStateException("Cannot submit future dates");
         }
-        if (date.isBefore(today)) {
-            throw new IllegalStateException("Past dates are read-only");
-        }
 
-        // At this point: date == today
+        // 2) If this date already has any logs → treat as submitted & read-only
+        //    We simply NO-OP and return 200 OK. No error to the UI.
         List<TaskLog> existingLogs = taskLogRepository.findByUserIdAndLogDate(user.getId(), date);
-        boolean alreadySubmitted = !existingLogs.isEmpty();
-        if (alreadySubmitted) {
-            throw new IllegalStateException("This day's data has already been submitted and is read-only");
+        if (!existingLogs.isEmpty()) {
+            return; // already submitted, ignore new payload
         }
 
-        // First submission for today: create logs for each task
+        // 3) First submission for this date (today or a past date with no data)
         List<Task> tasks = taskRepository.findByUserIdAndActiveTrueOrderByIdAsc(user.getId());
         Map<Long, Task> taskById = tasks.stream()
                 .collect(Collectors.toMap(Task::getId, Function.identity()));
@@ -102,6 +108,8 @@ public class DaySummaryService {
             taskLogRepository.save(log);
         }
     }
+
+
 
     private LocalTime parseTimeOrNull(String value) {
         if (value == null || value.isBlank()) return null;

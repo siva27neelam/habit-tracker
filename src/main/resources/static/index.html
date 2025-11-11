@@ -489,12 +489,9 @@
     <div class="actions-row">
         <button class="btn btn-secondary" id="clear-today-btn">Clear Today</button>
         <button class="btn btn-primary" id="save-day-btn">Save Today’s Check-in</button>
-        <button class="btn-ghost" disabled>View past days (coming soon)</button>
     </div>
 
-    <footer>
-        Local web UI · Backed by Spring Boot + MySQL · Days lock after submission.
-    </footer>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -508,12 +505,23 @@
     const extraStats = document.getElementById('extra-stats');
     const addTaskError = document.getElementById('add-task-error');
     const toast = document.getElementById('toast');
+    const today = getTodayLocalISO();
 
-    const today = new Date().toISOString().slice(0, 10);
     dateInput.value = today;
+    dateInput.max = today; // no future dates by typing
 
     let activeUsername = 'siva';
-    let currentDayData = { date: today, tasks: [], submitted: false };
+    let currentDayData = { date: today, tasks: [], submitted: false, firstDate: today };
+
+
+function getTodayLocalISO() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;  // "YYYY-MM-DD" in *local* time
+}
+
 
     function showToast(message, ok = true) {
       toast.textContent = message;
@@ -525,7 +533,6 @@
     }
 
     function toDate(dateStr) {
-      // treat as local date (ignoring time zone offsets)
       const [y, m, d] = dateStr.split('-').map(Number);
       return new Date(y, m - 1, d);
     }
@@ -544,9 +551,26 @@
     }
 
     function adjustDate(days) {
-      const d = toDate(dateInput.value || today);
-      d.setDate(d.getDate() + days);
-      dateInput.value = d.toISOString().slice(0, 10);
+      const current = toDate(dateInput.value || today);
+      const newDate = new Date(current);
+      newDate.setDate(current.getDate() + days);
+
+      const firstDateStr = currentDayData.firstDate || today;
+      const firstDate = toDate(firstDateStr);
+
+      if (newDate < firstDate) {
+        showToast(`You can't go before your first tracking day (${firstDateStr})`, false);
+        return;
+      }
+
+      // also prevent going beyond today via nav
+      const todayDate = toDate(today);
+      if (newDate > todayDate) {
+        showToast("You can't go beyond today", false);
+        return;
+      }
+
+      dateInput.value = newDate.toISOString().slice(0, 10);
       loadDay().catch(console.error);
     }
 
@@ -579,9 +603,7 @@
     function createTaskCard(task, readOnly) {
       const article = document.createElement('article');
       article.className = 'habit-card';
-      if (readOnly) {
-        article.classList.add('readonly');
-      }
+      if (readOnly) article.classList.add('readonly');
       article.dataset.taskId = task.taskId;
 
       const categoryLabel = task.category || 'General';
@@ -622,19 +644,19 @@
       return article;
     }
 
-    function updateOverviewState(dateStr, submitted, tasks) {
+    function updateOverviewState(dateStr, submitted, tasks, firstDateStr) {
       const state = getDateState(dateStr, submitted);
       let msg = '';
       if (state === 'future') msg = 'Future date · read-only';
       else if (state === 'past') msg = 'Past date · read-only';
       else if (state === 'locked') msg = 'Submitted · read-only';
-      else msg = 'Today · editable until first submit';
+      else msg = '';
+
+
 
       extraStats.textContent = msg;
-
       computeProgress(tasks || []);
 
-      // buttons
       const saveBtn = document.getElementById('save-day-btn');
       const clearBtn = document.getElementById('clear-today-btn');
       const readOnly = isReadOnly(dateStr, submitted);
@@ -650,13 +672,17 @@
         habitGrid.appendChild(card);
       });
 
-      updateOverviewState(daySummary.date, daySummary.submitted, daySummary.tasks);
+      // adjust date picker min based on firstDate from backend
+      const firstDateStr = daySummary.firstDate || today;
+      dateInput.min = firstDateStr;
+
+      updateOverviewState(daySummary.date, daySummary.submitted, daySummary.tasks, firstDateStr);
     }
 
     async function loadDay() {
       const date = dateInput.value;
       const data = await fetchJson(`/api/users/${activeUsername}/day/${date}`);
-      currentDayData = data || { date, tasks: [], submitted: false };
+      currentDayData = data || { date, tasks: [], submitted: false, firstDate: today };
       overviewTitle.textContent = `Progress for ${activeUsername} (${date})`;
       renderTasks(currentDayData);
     }
@@ -683,8 +709,7 @@
           body: JSON.stringify({ date, tasks })
         });
         showToast('Saved & locked for today');
-        // reload so that submitted=true comes from backend
-        await loadDay();
+        await loadDay(); // refresh submitted + firstDate
       } catch (e) {
         console.error(e);
         showToast('Failed to save: ' + e.message, false);
@@ -741,6 +766,15 @@
       loadDay().catch(console.error);
     });
     dateInput.addEventListener('change', () => {
+      // Prevent manually typing earlier than min or later than today
+      const min = dateInput.min || today;
+      if (dateInput.value < min) {
+        showToast(`You can't go before your first tracking day (${min})`, false);
+        dateInput.value = min;
+      } else if (dateInput.value > today) {
+        showToast("You can't go beyond today", false);
+        dateInput.value = today;
+      }
       loadDay().catch(console.error);
     });
 

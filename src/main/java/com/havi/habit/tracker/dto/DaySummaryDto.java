@@ -11,5 +11,5 @@ public class DaySummaryDto {
     private LocalDate date;
     private List<TaskLogDto> tasks;
     private boolean submitted;
-
+    private LocalDate firstDate;
 }
