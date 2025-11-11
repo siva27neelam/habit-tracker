@@ -2,7 +2,7 @@ name: Build and Push Docker Image (Gradle)
 
 on:
   push:
-    branches: [ "masterx" ]    # change if your main branch is different
+    branches: [ "master" ]    # change if your main branch is different
   workflow_dispatch:
 
 jobs:
